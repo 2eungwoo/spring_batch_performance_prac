@@ -1,4 +1,4 @@
-package study.batchperformance.batch.job.main.create;
+package study.batchperformance.batch.job.performance.jpa_paging_reader.create;
 
 import jakarta.persistence.EntityManagerFactory;
 import java.util.HashMap;

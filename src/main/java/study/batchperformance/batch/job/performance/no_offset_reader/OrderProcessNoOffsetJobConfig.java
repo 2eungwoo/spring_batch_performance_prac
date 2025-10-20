@@ -1,4 +1,4 @@
-package study.batchperformance.batch.job.performance.nooffset;
+package study.batchperformance.batch.job.performance.no_offset_reader;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManagerFactory;
@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
-import study.batchperformance.batch.job.performance.nooffset.reader.QueryDslNoOffsetItemReader;
 import study.batchperformance.domain.order.OrderEntity;
 import study.batchperformance.domain.order.OrderStatus;
 import study.batchperformance.repository.OrderJpaRepository;

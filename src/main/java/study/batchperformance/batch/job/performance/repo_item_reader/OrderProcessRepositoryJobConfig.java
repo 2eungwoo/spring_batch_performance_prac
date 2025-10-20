@@ -1,4 +1,4 @@
-package study.batchperformance.batch.job.performance.repository;
+package study.batchperformance.batch.job.performance.repo_item_reader;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,13 +28,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OrderProcessRepositoryJobConfig {
 
-    @Value("${job.config.performance.repository.name}")
+    @Value("${job.config.performance.jpa-paging-reader.name}")
     private String jobName;
 
-    @Value("${job.config.performance.repository.step}")
+    @Value("${job.config.performance.jpa-paging-reader.step}")
     private String stepName;
 
-    @Value("${job.config.performance.repository.chunk-size}")
+    @Value("${job.config.performance.jpa-paging-reader.chunk-size}")
     private int chunkSize;
 
     private final JobRepository jobRepository;

@@ -42,7 +42,7 @@ job:
       step: orderProcessNoOffsetStep
       chunk-size: 1000
     performance:
-      repository:
+      jpa-paging-reader:
         name: orderProcessRepositoryJob
         step: orderProcessRepositoryStep
         chunk-size: 1000
