@@ -34,4 +34,8 @@ public class OrderEntity extends BaseTimeEntity {
         this.amount = amount;
         this.status = status;
     }
+
+    public void updateStatus(OrderStatus status) {
+        this.status = status;
+    }
 }
