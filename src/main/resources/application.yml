@@ -41,3 +41,8 @@ job:
       name: orderProcessNoOffsetJob
       step: orderProcessNoOffsetStep
       chunk-size: 1000
+    performance:
+      repository:
+        name: orderProcessRepositoryJob
+        step: orderProcessRepositoryStep
+        chunk-size: 1000
