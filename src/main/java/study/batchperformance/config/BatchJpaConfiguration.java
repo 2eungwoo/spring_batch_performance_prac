@@ -1,4 +1,4 @@
-package study.batchperformance.infrastructure.persistence;
+package study.batchperformance.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;

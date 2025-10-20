@@ -4,7 +4,7 @@ spring:
   batch:
     job:
       name: orderJob
-      enabled: true
+      enabled: false
     jdbc:
       initialize-schema: always
   datasource:
