@@ -1,6 +1,7 @@
 package study.batchperformance.batch.job.create;
 
-import java.util.List;
+import jakarta.persistence.EntityManagerFactory;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,11 +12,10 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.data.RepositoryItemReader;
-import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
+import org.springframework.batch.item.database.JpaPagingItemReader;
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.domain.Sort;
 import org.springframework.transaction.PlatformTransactionManager;
 import study.batchperformance.domain.order.OrderEntity;
 import study.batchperformance.domain.order.OrderStatus;
@@ -28,9 +28,11 @@ public class OrderCreateJobConfig {
 
     private static final String JOB_NAME = "orderCreateJob";
     private static final String STEP_NAME = "orderCreateStep";
+    private static final int CHUNK_SIZE = 1000;
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
+    private final EntityManagerFactory entityManagerFactory; // EntityManagerFactory 주입
     private final OrderJpaRepository orderJpaRepository;
 
     @Bean
@@ -43,7 +45,7 @@ public class OrderCreateJobConfig {
     @Bean
     public Step orderCreateStep() {
         return new StepBuilder(STEP_NAME, jobRepository)
-                .<OrderEntity, OrderEntity>chunk(1000, transactionManager)
+                .<OrderEntity, OrderEntity>chunk(CHUNK_SIZE, transactionManager)
                 .reader(orderCreateReader())
                 .processor(orderCreateProcessor())
                 .writer(orderCreateWriter())
@@ -51,14 +53,18 @@ public class OrderCreateJobConfig {
     }
 
     @Bean
-    public RepositoryItemReader<OrderEntity> orderCreateReader() {
-        return new RepositoryItemReaderBuilder<OrderEntity>()
+    public JpaPagingItemReader<OrderEntity> orderCreateReader() {
+        String jpqlQuery = "SELECT o FROM OrderEntity o WHERE o.status = :status ORDER BY o.id ASC";
+
+        Map<String, Object> parameterValues = new HashMap<>();
+        parameterValues.put("status", OrderStatus.CREATED);
+
+        return new JpaPagingItemReaderBuilder<OrderEntity>()
                 .name("orderCreateReader")
-                .repository(orderJpaRepository)
-                .methodName("findByStatus")
-                .arguments(List.of(OrderStatus.CREATED))
-                .pageSize(1000)
-                .sorts(Map.of("id", Sort.Direction.ASC))
+                .entityManagerFactory(entityManagerFactory)
+                .pageSize(CHUNK_SIZE)
+                .queryString(jpqlQuery)
+                .parameterValues(parameterValues)
                 .build();
     }
 
