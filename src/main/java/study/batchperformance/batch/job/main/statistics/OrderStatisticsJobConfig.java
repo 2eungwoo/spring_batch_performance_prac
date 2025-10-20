@@ -1,4 +1,4 @@
-package study.batchperformance.batch.job.statistics;
+package study.batchperformance.batch.job.main.statistics;
 
 import java.util.List;
 import java.util.stream.Collectors;

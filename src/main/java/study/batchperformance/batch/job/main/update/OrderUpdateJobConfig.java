@@ -1,4 +1,4 @@
-package study.batchperformance.batch.job.update;
+package study.batchperformance.batch.job.main.update;
 
 import jakarta.persistence.EntityManagerFactory;
 import java.util.HashMap;

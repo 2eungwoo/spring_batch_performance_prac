@@ -1,40 +1,39 @@
-package study.batchperformance.batch.job.nooffset;
+package study.batchperformance.batch.job.main.create;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManagerFactory;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JpaPagingItemReader;
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
-import study.batchperformance.batch.job.nooffset.reader.QueryDslNoOffsetItemReader;
 import study.batchperformance.domain.order.OrderEntity;
 import study.batchperformance.domain.order.OrderStatus;
 import study.batchperformance.repository.OrderJpaRepository;
 
-import static study.batchperformance.domain.order.QOrderEntity.orderEntity;
-
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-public class OrderProcessNoOffsetJobConfig {
+public class OrderCreateJobConfig {
 
-    @Value("${job.config.no-offset.name}")
+    @Value("${job.config.create.name}")
     private String jobName;
 
-    @Value("${job.config.no-offset.step}")
+    @Value("${job.config.create.step}")
     private String stepName;
 
-    @Value("${job.config.no-offset.chunk-size}")
+    @Value("${job.config.create.chunk-size}")
     private int chunkSize;
 
     private final JobRepository jobRepository;
@@ -43,52 +42,53 @@ public class OrderProcessNoOffsetJobConfig {
     private final OrderJpaRepository orderJpaRepository;
 
     @Bean
-    public JPAQueryFactory jpaQueryFactory() {
-        return new JPAQueryFactory(entityManagerFactory.createEntityManager());
-    }
-
-    @Bean
-    public Job orderProcessNoOffsetJob() {
+    public Job orderCreateJob() {
         return new JobBuilder(jobName, jobRepository)
-                .start(orderProcessNoOffsetStep())
+                .start(orderCreateStep())
                 .build();
     }
 
     @Bean
-    @JobScope
-    public Step orderProcessNoOffsetStep() {
+    public Step orderCreateStep() {
         return new StepBuilder(stepName, jobRepository)
                 .<OrderEntity, OrderEntity>chunk(chunkSize, transactionManager)
-                .reader(queryDslNoOffsetReader())
-                .processor(orderProcessNoOffsetProcessor())
-                .writer(orderProcessNoOffsetWriter())
+                .reader(orderCreateReader())
+                .processor(orderCreateProcessor())
+                .writer(orderCreateWriter())
                 .build();
     }
 
     @Bean
-    public QueryDslNoOffsetItemReader<OrderEntity> queryDslNoOffsetReader() {
-        return new QueryDslNoOffsetItemReader<>(
-                jpaQueryFactory(),
-                chunkSize,
-                // ID 경로와 ID 추출 방법을 Reader에 전달
-                orderEntity.id,
-                OrderEntity::getId,
-                queryFactory -> queryFactory
-                        .selectFrom(orderEntity)
-                        .where(orderEntity.status.eq(OrderStatus.CREATED))
-        );
+    public JpaPagingItemReader<OrderEntity> orderCreateReader() {
+        String jpqlQuery = "SELECT o FROM OrderEntity o WHERE o.status = :status ORDER BY o.id ASC";
+
+        Map<String, Object> parameterValues = new HashMap<>();
+        parameterValues.put("status", OrderStatus.CREATED);
+
+        return new JpaPagingItemReaderBuilder<OrderEntity>()
+                .name("orderCreateReader")
+                .entityManagerFactory(entityManagerFactory)
+                .pageSize(chunkSize)
+                .queryString(jpqlQuery)
+                .parameterValues(parameterValues)
+                .build();
     }
 
     @Bean
-    public ItemProcessor<OrderEntity, OrderEntity> orderProcessNoOffsetProcessor() {
+    public ItemProcessor<OrderEntity, OrderEntity> orderCreateProcessor() {
         return source -> {
+            // source 객체의 상태를 직접 변경하여 업데이트
+            log.debug("신규 주문 처리 대상: {}", source.getId());
             source.updateStatus(OrderStatus.PROCESSING);
             return source;
         };
     }
 
     @Bean
-    public ItemWriter<OrderEntity> orderProcessNoOffsetWriter() {
-        return orderJpaRepository::saveAll;
+    public ItemWriter<OrderEntity> orderCreateWriter() {
+        return items -> {
+            orderJpaRepository.saveAll(items);
+            log.info("신규 주문 {}건 생성 완료", items.size());
+        };
     }
 }

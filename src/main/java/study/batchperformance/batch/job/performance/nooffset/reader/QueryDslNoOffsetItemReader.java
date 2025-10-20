@@ -1,4 +1,4 @@
-package study.batchperformance.batch.job.nooffset.reader;
+package study.batchperformance.batch.job.performance.nooffset.reader;
 
 import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.jpa.impl.JPAQuery;
