@@ -2,8 +2,7 @@ package study.batchperformance.domain.order;
 
 public enum OrderStatus {
     CREATED,
-    PAID,
-    SHIPPED,
+    PROCESSING,
     COMPLETED,
     CANCELLED
 }
