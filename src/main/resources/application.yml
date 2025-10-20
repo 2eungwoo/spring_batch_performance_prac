@@ -3,7 +3,7 @@ spring:
     name: batch-performance
   batch:
     job:
-      name: orderJob
+      name: ${job.name:NONE} # 기본 잡 실행 비활성화 -> 잡별 설정값 밑에 따로 작성
       enabled: false
     jdbc:
       initialize-schema: always
@@ -23,3 +23,21 @@ logging:
   level:
     org.springframework.batch: INFO
     org.hibernate.SQL: DEBUG
+
+job:
+  config:
+    create:
+      name: orderCreateJob
+      step: orderCreateStep
+      chunk-size: 1000
+    update:
+      name: orderUpdateJob
+      step: orderUpdateStep
+      chunk-size: 1000
+    statistics:
+      name: orderStatisticsJob
+      step: orderStatisticsStep
+    no-offset:
+      name: orderProcessNoOffsetJob
+      step: orderProcessNoOffsetStep
+      chunk-size: 1000

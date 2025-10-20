@@ -14,6 +14,7 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -26,26 +27,31 @@ import study.batchperformance.repository.OrderJpaRepository;
 @RequiredArgsConstructor
 public class OrderCreateJobConfig {
 
-    private static final String JOB_NAME = "orderCreateJob";
-    private static final String STEP_NAME = "orderCreateStep";
-    private static final int CHUNK_SIZE = 1000;
+    @Value("${job.config.create.name}")
+    private String jobName;
+
+    @Value("${job.config.create.step}")
+    private String stepName;
+
+    @Value("${job.config.create.chunk-size}")
+    private int chunkSize;
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
-    private final EntityManagerFactory entityManagerFactory; // EntityManagerFactory 주입
+    private final EntityManagerFactory entityManagerFactory;
     private final OrderJpaRepository orderJpaRepository;
 
     @Bean
     public Job orderCreateJob() {
-        return new JobBuilder(JOB_NAME, jobRepository)
+        return new JobBuilder(jobName, jobRepository)
                 .start(orderCreateStep())
                 .build();
     }
 
     @Bean
     public Step orderCreateStep() {
-        return new StepBuilder(STEP_NAME, jobRepository)
-                .<OrderEntity, OrderEntity>chunk(CHUNK_SIZE, transactionManager)
+        return new StepBuilder(stepName, jobRepository)
+                .<OrderEntity, OrderEntity>chunk(chunkSize, transactionManager)
                 .reader(orderCreateReader())
                 .processor(orderCreateProcessor())
                 .writer(orderCreateWriter())
@@ -62,7 +68,7 @@ public class OrderCreateJobConfig {
         return new JpaPagingItemReaderBuilder<OrderEntity>()
                 .name("orderCreateReader")
                 .entityManagerFactory(entityManagerFactory)
-                .pageSize(CHUNK_SIZE)
+                .pageSize(chunkSize)
                 .queryString(jpqlQuery)
                 .parameterValues(parameterValues)
                 .build();

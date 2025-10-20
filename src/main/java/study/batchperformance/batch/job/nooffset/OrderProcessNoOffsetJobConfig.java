@@ -12,6 +12,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -27,9 +28,14 @@ import static study.batchperformance.domain.order.QOrderEntity.orderEntity;
 @RequiredArgsConstructor
 public class OrderProcessNoOffsetJobConfig {
 
-    private static final String JOB_NAME = "orderProcessNoOffsetJob";
-    private static final String STEP_NAME = "orderProcessNoOffsetStep";
-    private static final int CHUNK_SIZE = 1000;
+    @Value("${job.config.no-offset.name}")
+    private String jobName;
+
+    @Value("${job.config.no-offset.step}")
+    private String stepName;
+
+    @Value("${job.config.no-offset.chunk-size}")
+    private int chunkSize;
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
@@ -43,7 +49,7 @@ public class OrderProcessNoOffsetJobConfig {
 
     @Bean
     public Job orderProcessNoOffsetJob() {
-        return new JobBuilder(JOB_NAME, jobRepository)
+        return new JobBuilder(jobName, jobRepository)
                 .start(orderProcessNoOffsetStep())
                 .build();
     }
@@ -51,8 +57,8 @@ public class OrderProcessNoOffsetJobConfig {
     @Bean
     @JobScope
     public Step orderProcessNoOffsetStep() {
-        return new StepBuilder(STEP_NAME, jobRepository)
-                .<OrderEntity, OrderEntity>chunk(CHUNK_SIZE, transactionManager)
+        return new StepBuilder(stepName, jobRepository)
+                .<OrderEntity, OrderEntity>chunk(chunkSize, transactionManager)
                 .reader(queryDslNoOffsetReader())
                 .processor(orderProcessNoOffsetProcessor())
                 .writer(orderProcessNoOffsetWriter())
@@ -63,7 +69,7 @@ public class OrderProcessNoOffsetJobConfig {
     public QueryDslNoOffsetItemReader<OrderEntity> queryDslNoOffsetReader() {
         return new QueryDslNoOffsetItemReader<>(
                 jpaQueryFactory(),
-                CHUNK_SIZE,
+                chunkSize,
                 // ID 경로와 ID 추출 방법을 Reader에 전달
                 orderEntity.id,
                 OrderEntity::getId,

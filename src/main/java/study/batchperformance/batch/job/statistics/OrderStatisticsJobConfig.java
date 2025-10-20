@@ -11,6 +11,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -24,8 +25,11 @@ import study.batchperformance.repository.projection.OrderStatisticsProjection;
 @RequiredArgsConstructor
 public class OrderStatisticsJobConfig {
 
-    private static final String JOB_NAME = "orderStatisticsJob";
-    private static final String STEP_NAME = "orderStatisticsStep";
+    @Value("${job.config.statistics.name}")
+    private String jobName;
+
+    @Value("${job.config.statistics.step}")
+    private String stepName;
 
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
@@ -34,14 +38,14 @@ public class OrderStatisticsJobConfig {
 
     @Bean
     public Job orderStatisticsJob() {
-        return new JobBuilder(JOB_NAME, jobRepository)
+        return new JobBuilder(jobName, jobRepository)
                 .start(orderStatisticsStep())
                 .build();
     }
 
     @Bean
     public Step orderStatisticsStep() {
-        return new StepBuilder(STEP_NAME, jobRepository)
+        return new StepBuilder(stepName, jobRepository)
                 .tasklet(orderStatisticsTasklet(), transactionManager)
                 .build();
     }
