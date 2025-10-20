@@ -43,7 +43,7 @@ public class OrderUpdateJobConfig {
     @Bean
     public Step orderUpdateStep() {
         return new StepBuilder(STEP_NAME, jobRepository)
-                .<OrderEntity, OrderEntity>chunk(10, transactionManager)
+                .<OrderEntity, OrderEntity>chunk(1000, transactionManager)
                 .reader(orderUpdateReader())
                 .processor(orderUpdateProcessor())
                 .writer(orderUpdateWriter())
@@ -57,7 +57,7 @@ public class OrderUpdateJobConfig {
                 .repository(orderJpaRepository)
                 .methodName("findByStatus")
                 .arguments(List.of(OrderStatus.PROCESSING))
-                .pageSize(10)
+                .pageSize(1000)
                 .sorts(Map.of("id", Sort.Direction.ASC))
                 .build();
     }

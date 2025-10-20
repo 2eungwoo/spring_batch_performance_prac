@@ -2,10 +2,11 @@ package study.batchperformance.batch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.configuration.JobLocator;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.launch.NoSuchJobException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -15,17 +16,20 @@ import org.springframework.stereotype.Component;
 public class OrderJobScheduler {
 
     private final JobLauncher jobLauncher;
-    private final Job orderJob;
+    private final JobLocator jobLocator;
 
     @Scheduled(cron = "*/10 * * * * *")
     public void launchOrderJob() {
-        JobParameters parameters = new JobParametersBuilder()
-                .addLong("timestamp", System.currentTimeMillis())
-                .toJobParameters();
         try {
-            jobLauncher.run(orderJob, parameters);
+            var job = jobLocator.getJob("orderJob");
+            JobParameters parameters = new JobParametersBuilder()
+                    .addLong("timestamp", System.currentTimeMillis())
+                    .toJobParameters();
+            jobLauncher.run(job, parameters);
+        } catch (NoSuchJobException ex) {
+            log.warn("orderJob 이 등록되어 있지 않아 실행 실패", ex);
         } catch (Exception ex) {
-            log.error("주문 배치 실행 중 오류가 발생했습니다.", ex);
+            log.error("배치 실행 중 오류 발생.", ex);
         }
     }
 }

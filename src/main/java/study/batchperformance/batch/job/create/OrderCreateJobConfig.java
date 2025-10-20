@@ -43,7 +43,7 @@ public class OrderCreateJobConfig {
     @Bean
     public Step orderCreateStep() {
         return new StepBuilder(STEP_NAME, jobRepository)
-                .<OrderEntity, OrderEntity>chunk(10, transactionManager)
+                .<OrderEntity, OrderEntity>chunk(1000, transactionManager)
                 .reader(orderCreateReader())
                 .processor(orderCreateProcessor())
                 .writer(orderCreateWriter())
@@ -57,7 +57,7 @@ public class OrderCreateJobConfig {
                 .repository(orderJpaRepository)
                 .methodName("findByStatus")
                 .arguments(List.of(OrderStatus.CREATED))
-                .pageSize(10)
+                .pageSize(1000)
                 .sorts(Map.of("id", Sort.Direction.ASC))
                 .build();
     }
@@ -65,11 +65,10 @@ public class OrderCreateJobConfig {
     @Bean
     public ItemProcessor<OrderEntity, OrderEntity> orderCreateProcessor() {
         return source -> {
-            log.debug("신규 주문 생성 대상: {}", source.getId());
-            return OrderEntity.builder()
-                    .amount(source.getAmount())
-                    .status(OrderStatus.PROCESSING)
-                    .build();
+            // source 객체의 상태를 직접 변경하여 업데이트
+            log.debug("신규 주문 처리 대상: {}", source.getId());
+            source.updateStatus(OrderStatus.PROCESSING);
+            return source;
         };
     }
 
