@@ -17,6 +17,7 @@ import java.util.function.Function;
  * <p>
  * 이 Reader는 QueryDSL 쿼리를 사용하여 지정된 페이지 크기만큼 데이터를 조회합니다.
  * <p>
+ * GEMINI의 말
  * 주의: 이 Reader는 ItemStream이 아니므로, 재시작 시 상태를 저장/복원하지 않습니다.
  *      실제 운영 환경에서는 ItemStream을 구현하여 재시작 기능을 지원해야 합니다.
  */
