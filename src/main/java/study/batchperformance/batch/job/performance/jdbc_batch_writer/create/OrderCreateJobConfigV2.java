@@ -1,0 +1,101 @@
+package study.batchperformance.batch.job.performance.jdbc_batch_writer.create;
+
+import jakarta.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
+import org.springframework.batch.item.database.JdbcBatchItemWriter;
+import org.springframework.batch.item.database.JpaPagingItemReader;
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
+import study.batchperformance.domain.order.OrderEntity;
+import study.batchperformance.domain.order.OrderStatus;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@Configuration
+@RequiredArgsConstructor
+public class OrderCreateJobConfigV2 {
+
+    @Value("${job.config.create.name}-v2")
+    private String jobName;
+
+    @Value("${job.config.create.step}-v2")
+    private String stepName;
+
+    @Value("${job.config.create.chunk-size}")
+    private int chunkSize;
+
+    private final JobRepository jobRepository;
+    private final PlatformTransactionManager transactionManager;
+    private final EntityManagerFactory entityManagerFactory;
+    private final DataSource dataSource;
+
+    @Bean
+    public Job orderCreateJobV2() {
+        return new JobBuilder(jobName, jobRepository)
+                .start(orderCreateStepV2())
+                .build();
+    }
+
+    @Bean
+    public Step orderCreateStepV2() {
+        return new StepBuilder(stepName, jobRepository)
+                .<OrderEntity, OrderEntity>chunk(chunkSize, transactionManager)
+                .reader(orderCreateReaderV2())
+                .processor(orderCreateProcessorV2())
+                .writer(orderCreateWriterV2())
+                .build();
+    }
+
+    @Bean
+    public JpaPagingItemReader<OrderEntity> orderCreateReaderV2() {
+        String jpqlQuery = "SELECT o FROM OrderEntity o WHERE o.status = :status ORDER BY o.id ASC";
+
+        Map<String, Object> parameterValues = new HashMap<>();
+        parameterValues.put("status", OrderStatus.CREATED);
+
+        return new JpaPagingItemReaderBuilder<OrderEntity>()
+                .name("orderCreateReaderV2")
+                .entityManagerFactory(entityManagerFactory)
+                .pageSize(chunkSize)
+                .queryString(jpqlQuery)
+                .parameterValues(parameterValues)
+                .build();
+    }
+
+    @Bean
+    public ItemProcessor<OrderEntity, OrderEntity> orderCreateProcessorV2() {
+        return source -> {
+            log.debug("신규 주문 처리 대상: {}", source.getId());
+            source.updateStatus(OrderStatus.PROCESSING);
+            return source;
+        };
+    }
+
+    @Bean
+    public ItemWriter<OrderEntity> orderCreateWriterV2() {
+        return new JdbcBatchItemWriterBuilder<OrderEntity>()
+                .dataSource(dataSource)
+                .sql("""
+                    INSERT INTO orders (amount, status, created_at, updated_at)
+                    VALUES (:amount, :status, :createdAt, :updatedAt)
+                """)
+                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
+                .build();
+    }
+}
