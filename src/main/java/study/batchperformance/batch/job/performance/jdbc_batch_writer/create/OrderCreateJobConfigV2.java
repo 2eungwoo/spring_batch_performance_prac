@@ -26,6 +26,14 @@ import study.batchperformance.domain.order.OrderStatus;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * V2: JpaPagingItemReader (Entity) + JdbcBatchItemWriter
+ * <p>
+ * Reader: JpaPagingItemReader를 사용하여 OrderEntity를 조회, 영속성 컨텍스트 사용
+ * Writer: JdbcBatchItemWriter를 사용하여 배치 UPDATE 처리 (IDENTITY 전략 문제 해결)
+ * <p>
+ * 참고: Reader에서 엔티티를 조회하므로 영속성 컨텍스트 오버헤드가 여전히 존재함
+ */
 @Slf4j
 @Configuration
 @RequiredArgsConstructor

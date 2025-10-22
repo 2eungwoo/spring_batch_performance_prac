@@ -24,6 +24,12 @@ import study.batchperformance.domain.order.OrderStatus;
 import study.batchperformance.dto.OrderDto;
 import study.batchperformance.dto.QOrderDto;
 
+/**
+ * V4: 커스텀 QueryDSL 페이징 Reader + DTO 프로젝션 + JdbcBatchItemWriter
+ * <p>
+ * Reader: CustomQuerydslPagingItemReader를 사용하여 QueryDSL DTO 프로젝션을 조회. 영속성 컨텍스트를 사용하지 않음.
+ * Writer: JdbcBatchItemWriter를 사용하여 배치 UPDATE 처리.
+ */
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
