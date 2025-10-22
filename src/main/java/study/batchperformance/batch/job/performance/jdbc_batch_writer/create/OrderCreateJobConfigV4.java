@@ -50,7 +50,7 @@ public class OrderCreateJobConfigV4 {
     private final DataSource dataSource;
 
     @Bean
-    public JPAQueryFactory jpaQueryFactory() {
+    public JPAQueryFactory orderCreateJobV4JpaQueryFactory() {
         return new JPAQueryFactory(entityManagerFactory.createEntityManager());
     }
 
@@ -73,9 +73,8 @@ public class OrderCreateJobConfigV4 {
 
     @Bean
     public CustomQuerydslPagingItemReader<OrderDto> orderCreateReaderV4() {
-        return new CustomQuerydslPagingItemReader<>(
-            jpaQueryFactory(),
-            chunkSize,
+                return new CustomQuerydslPagingItemReader<>(
+                        orderCreateJobV4JpaQueryFactory(),            chunkSize,
             queryFactory ->
                 queryFactory
                     .select(new QOrderDto(
